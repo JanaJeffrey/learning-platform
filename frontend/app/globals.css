@@ -1,0 +1,482 @@
+@import "tailwindcss";
+
+/* ============================================ */
+/* CUSTOM ANIMATIONS FOR HERO SECTION
+/* ============================================ */
+
+/* Blob animation for background floating orbs */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+/* Gradient animation for headlines */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Animation delay utilities */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animation-delay-6000 {
+  animation-delay: 6s;
+}
+
+/* Slow bounce animation for floating cards */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+/* ============================================ */
+/* FADE IN ANIMATION FOR PAGE TRANSITIONS
+/* ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* ============================================ */
+/* SMOOTH SCROLL BEHAVIOR
+/* ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================ */
+/* CUSTOM SCROLLBAR - Modern Professional Look
+/* ============================================ */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track:hover {
+  background: #e5e5e5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #4f46e5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #4338ca);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4f46e5 #f1f1f1;
+}
+
+/* ============================================ */
+/* SELECTION COLOR - Brand Color
+/* ============================================ */
+
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+::-moz-selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+/* ============================================ */
+/* LOADING ANIMATION
+/* ============================================ */
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* ============================================ */
+/* PULSE RING ANIMATION FOR NOTIFICATIONS
+/* ============================================ */
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* ============================================ */
+/* SHIMMER EFFECT FOR LOADING SKELETONS
+/* ============================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
+}
+
+/* ============================================ */
+/* GLOW EFFECT FOR CARDS ON HOVER
+/* ============================================ */
+
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px);
+}
+
+/* ============================================ */
+/* BODY STYLES
+/* ============================================ */
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================ */
+/* DARK MODE STYLES - COMPLETE FALLBACK
+/* ============================================ */
+/* These styles apply when the 'dark' class is on the html element */
+/* This works even if Tailwind's dark: prefix fails */
+
+/* Global dark mode background */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+/* ============================================ */
+/* FOOTER DARK MODE
+/* ============================================ */
+.dark footer {
+  background-color: #111827 !important;
+  color: #9ca3af !important;
+}
+
+.dark footer .text-white {
+  color: white !important;
+}
+
+.dark footer .text-gray-400 {
+  color: #6b7280 !important;
+}
+
+.dark footer .border-gray-800 {
+  border-color: #1f2937 !important;
+}
+
+.dark footer .bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+.dark footer .hover\:bg-gray-700:hover {
+  background-color: #374151 !important;
+}
+
+/* ============================================ */
+/* NAVBAR DARK MODE
+/* ============================================ */
+.dark nav {
+  background-color: #1f2937 !important;
+  border-bottom-color: #374151 !important;
+}
+
+.dark nav .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark nav .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark nav .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark nav .hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
+}
+
+.dark nav .border-gray-100 {
+  border-color: #374151 !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: #1f2937f2 !important;
+}
+
+.dark .backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* ============================================ */
+/* CARDS AND CONTAINERS DARK MODE
+/* ============================================ */
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #111827 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: #374151 !important;
+}
+
+/* ============================================ */
+/* TEXT COLORS DARK MODE
+/* ============================================ */
+.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+/* ============================================ */
+/* BORDER COLORS DARK MODE
+/* ============================================ */
+.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+.dark .border-gray-100 {
+  border-color: #1f2937 !important;
+}
+
+/* ============================================ */
+/* SHADOWS DARK MODE
+/* ============================================ */
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============================================ */
+/* FORM INPUTS DARK MODE
+/* ============================================ */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
+/* ============================================ */
+/* BUTTONS DARK MODE
+/* ============================================ */
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #374151 !important;
+}
+
+/* ============================================ */
+/* LINKS DARK MODE
+/* ============================================ */
+.dark a:not(.text-blue-600):not(.text-white):not(.text-red-600) {
+  color: #9ca3af !important;
+}
+
+.dark a:hover:not(.text-blue-600):not(.text-white):not(.text-red-600) {
+  color: #e5e7eb !important;
+}
+
+/* ============================================ */
+/* DROPDOWN MENUS DARK MODE
+/* ============================================ */
+.dark .bg-white\/95 {
+  background-color: #1f2937f2 !important;
+}
+
+.dark .dropdown-menu {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* ============================================ */
+/* HERO SECTION DARK MODE SPECIFIC
+/* ============================================ */
+.dark .bg-gradient-to-br {
+  background-color: #111827 !important;
+}
+
+.dark .from-blue-50 {
+  --tw-gradient-from: #111827 !important;
+}
+
+.dark .via-white {
+  --tw-gradient-via: #1f2937 !important;
+}
+
+.dark .to-indigo-50 {
+  --tw-gradient-to: #111827 !important;
+}
+
+/* ============================================ */
+/* MODAL AND OVERLAY DARK MODE
+/* ============================================ */
+.dark .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ============================================ */
+/* TABLE DARK MODE
+/* ============================================ */
+.dark table {
+  background-color: #1f2937 !important;
+}
+
+.dark td,
+.dark th {
+  border-color: #374151 !important;
+}
