@@ -1,23 +1,35 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function AboutPage() {
   const { isAuthenticated } = useAuth();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDark = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-900 pt-20">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       
       {/* ============================================
-          HERO SECTION - No white banner
+          HERO SECTION
           ============================================ */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden pt-8 md:pt-12">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-indigo-600/5 dark:from-blue-600/10 dark:to-indigo-600/10"></div>
         <div className="absolute top-20 left-10 w-64 h-64 bg-blue-400/10 dark:bg-blue-400/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-80 h-80 bg-indigo-400/10 dark:bg-indigo-400/5 rounded-full blur-3xl"></div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium mb-6">
             <span className="mr-2">🌟</span>
             Empowering Learners Worldwide
@@ -67,7 +79,7 @@ export default function AboutPage() {
         </div>
 
         {/* ============================================
-            MISSION SECTION - Text now visible in dark mode
+            MISSION SECTION
             ============================================ */}
         <div className="grid md:grid-cols-2 gap-12 mb-20 items-center">
           <div>
@@ -93,7 +105,7 @@ export default function AboutPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Trusted by students worldwide</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:bg-gray-800 rounded-2xl p-8 text-center">
             <div className="text-5xl mb-4">💡</div>
             <p className="text-gray-700 dark:text-gray-300 italic text-lg">
               "The beautiful thing about learning is that no one can take it away from you."
@@ -103,7 +115,7 @@ export default function AboutPage() {
         </div>
 
         {/* ============================================
-            VALUES SECTION - Text now visible in dark mode
+            VALUES SECTION
             ============================================ */}
         <div className="mb-20">
           <div className="text-center mb-12">
@@ -132,33 +144,97 @@ export default function AboutPage() {
         </div>
 
         {/* ============================================
-            CTA SECTION - No team section, just the call to action
+            CTA SECTION - BEAUTIFUL MODERN DESIGN
+            Light mode: Soft gradient + subtle border + floating effect
+            Dark mode: Glassmorphic design with neon glow
             ============================================ */}
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-800 dark:from-teal-900 dark:via-teal-900 dark:to-emerald-900"></div>
-          <div className="absolute inset-0 opacity-10" style={{
-            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
-            backgroundSize: "32px 32px"
-          }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-          
-          <div className="relative px-8 py-16 md:py-20 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to Start Your Journey?
-            </h2>
-            <p className="text-lg text-teal-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of students already learning on LearnHub
-            </p>
-            <Link
-              href={isAuthenticated ? "/courses" : "/register"}
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-teal-700 rounded-xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              <span>{isAuthenticated ? "Explore Courses" : "Get Started Free"}</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-          </div>
+        <div className="mt-8">
+          {!isDark ? (
+            // ========== LIGHT MODE CTA ==========
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-12 text-center shadow-xl transition-all duration-500 hover:scale-[1.02]">
+              {/* Animated background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-200/30 via-indigo-200/30 to-purple-200/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              
+              {/* Subtle border glow */}
+              <div className="absolute inset-0 rounded-2xl border border-blue-200/50 shadow-inner"></div>
+              
+              {/* Decorative circles */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-300/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-300/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-sm border border-blue-200 mb-6">
+                  <span className="text-2xl">🚀</span>
+                  <span className="text-sm font-medium text-blue-700">Limited Time Offer</span>
+                </div>
+                
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                  Ready to Start Your Journey?
+                </h2>
+                
+                <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
+                  Join thousands of students already learning on LearnHub
+                </p>
+                
+                <Link
+                  href={isAuthenticated ? "/courses" : "/register"}
+                  className="group/btn inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  <span>{isAuthenticated ? "Explore Courses" : "Get Started Free"}</span>
+                  <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            // ========== DARK MODE CTA ==========
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 p-12 text-center shadow-2xl transition-all duration-500 hover:scale-[1.02]">
+              {/* Glassmorphic border effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              
+              {/* Neon glow border */}
+              <div className="absolute inset-0 rounded-2xl border border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.2)] transition-shadow duration-500"></div>
+              
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              
+              {/* Decorative glowing orbs */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              
+              {/* Dot pattern overlay */}
+              <div className="absolute inset-0 opacity-5" style={{
+                backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+                backgroundSize: "32px 32px"
+              }}></div>
+              
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-700/50 backdrop-blur-sm border border-gray-600 mb-6">
+                  <span className="text-2xl">✨</span>
+                  <span className="text-sm font-medium text-blue-400">Begin Your Adventure</span>
+                </div>
+                
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  Ready to Start Your Journey?
+                </h2>
+                
+                <p className="text-lg text-gray-300 mb-8 max-w-lg mx-auto">
+                  Join thousands of students already learning on LearnHub
+                </p>
+                
+                <Link
+                  href={isAuthenticated ? "/courses" : "/register"}
+                  className="group/btn inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105"
+                >
+                  <span>{isAuthenticated ? "Explore Courses" : "Get Started Free"}</span>
+                  <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

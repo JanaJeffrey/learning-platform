@@ -189,13 +189,13 @@ export default function HeroSection() {
             </div>
             
             {/* Floating Rating Badge */}
-            <div className="absolute -top-6 -right-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl p-4 animate-bounce-slow border border-white/20 dark:border-gray-700/50">
+            <div className="absolute -top-6 -right-6 bg-white/90 dark:bg-gray-800 backdrop-blur-sm rounded-2xl shadow-2xl p-4 animate-bounce-slow border border-white/20 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-2xl shadow-lg">
                   ⭐
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900 dark:text-white">4.8 Rating</div>
+                  <div className="font-bold text-sm text-gray-900 dark:text-white">4.8 Rating</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">From 5,234+ reviews</div>
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-yellow-500 text-xs">★★★★★</span>
@@ -206,13 +206,13 @@ export default function HeroSection() {
             </div>
             
             {/* Floating Stats Badge */}
-            <div className="absolute -bottom-6 -left-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl p-4 animate-bounce-slow animation-delay-2000 border border-white/20 dark:border-gray-700/50">
+            <div className="absolute -bottom-6 -left-6 bg-white/90 dark:bg-gray-800 backdrop-blur-sm rounded-2xl shadow-2xl p-4 animate-bounce-slow animation-delay-2000 border border-white/20 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-2xl shadow-lg">
                   🎯
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900 dark:text-white">500+ Courses</div>
+                  <div className="font-bold text-sm text-gray-900 dark:text-white">500+ Courses</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Expert-led content</div>
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-green-500 text-xs">●</span>
@@ -225,10 +225,12 @@ export default function HeroSection() {
         </div>
       </div>
       
-      {/* Wave Bottom */}
+      {/* ============================================
+          WAVE BOTTOM - FIXED: White in light mode, Dark gray in dark mode
+          ============================================ */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-          <path d="M0 64L60 74.7C120 85 240 107 360 106.7C480 107 600 85 720 74.7C840 64 960 64 1080 69.3C1200 75 1320 85 1380 90.7L1440 96V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V64Z" fill="currentColor" className="text-white dark:text-gray-900"></path>
+          <path d="M0 64L60 74.7C120 85 240 107 360 106.7C480 107 600 85 720 74.7C840 64 960 64 1080 69.3C1200 75 1320 85 1380 90.7L1440 96V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V64Z" fill="#ffffff" className="dark:fill-gray-900"/>
         </svg>
       </div>
     </section>
