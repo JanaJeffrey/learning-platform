@@ -107,12 +107,38 @@ async function initDB() {
     `);
     console.log('✅ Reviews table ready');
 
+    // Notifications table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        link TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('✅ Notifications table ready');
+
     console.log('\n🎉 All database tables created successfully!');
   } catch (err) {
     console.error('❌ DB init error:', err.message);
   }
 }
 initDB();
+
+// ============================================
+// HELPER: Create Notification
+// ============================================
+async function createNotification(userId, type, title, message, link = null) {
+  const id = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  await pool.query(
+    'INSERT INTO notifications (id, user_id, type, title, message, link) VALUES ($1, $2, $3, $4, $5, $6)',
+    [id, userId, type, title, message, link]
+  );
+}
 
 // ============================================
 // MIDDLEWARE
@@ -266,6 +292,15 @@ app.post('/api/enroll', protect, async (req, res) => {
     
     await pool.query('UPDATE courses SET enrolled_students = enrolled_students + 1 WHERE id = $1', [courseId]);
     
+    // Create notification for enrollment
+    await createNotification(
+      req.user.id,
+      'enrollment',
+      'Course Enrolled',
+      `You have successfully enrolled in ${courseResult.rows[0].title}`,
+      `/courses/${courseId}`
+    );
+    
     res.json({ success: true, message: 'Enrolled successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -297,6 +332,17 @@ app.post('/api/progress', protect, async (req, res) => {
         watched_duration = EXCLUDED.watched_duration,
         last_watched_at = NOW()
     `, [progressId, userId, lessonId, lesson.course_id, isCompleted ? 1 : 0, watchedDuration]);
+    
+    // If lesson completed, send notification
+    if (isCompleted) {
+      await createNotification(
+        userId,
+        'achievement',
+        'Lesson Completed',
+        `You completed "${lesson.title}"! Keep going!`,
+        `/courses/${lesson.course_id}`
+      );
+    }
     
     res.json({ success: true, isCompleted, watchedDuration });
   } catch (err) {
@@ -427,6 +473,21 @@ app.post('/api/courses/:courseId/reviews', protect, async (req, res) => {
       [reviewId, userId, courseId, rating, comment]
     );
 
+    // Get course info for notification
+    const courseInfo = await pool.query('SELECT instructor_id, title FROM courses WHERE id = $1', [courseId]);
+    const userInfo = await pool.query('SELECT name FROM users WHERE id = $1', [userId]);
+    
+    // Notify instructor about new review (if not self-review)
+    if (courseInfo.rows.length > 0 && courseInfo.rows[0].instructor_id !== userId) {
+      await createNotification(
+        courseInfo.rows[0].instructor_id,
+        'review',
+        'New Review Received',
+        `${userInfo.rows[0].name} reviewed your course "${courseInfo.rows[0].title}" with ${rating} stars`,
+        `/courses/${courseId}#reviews`
+      );
+    }
+
     // Update course average rating and review count
     const avgResult = await pool.query(
       'SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM reviews WHERE course_id = $1',
@@ -449,6 +510,73 @@ app.post('/api/courses/:courseId/reviews', protect, async (req, res) => {
     });
   } catch (err) {
     console.error('Error adding review:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// NOTIFICATIONS API ROUTES
+// ============================================
+
+// Get user notifications
+app.get('/api/notifications', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await pool.query(`
+      SELECT * FROM notifications 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC 
+      LIMIT 30
+    `, [userId]);
+    
+    const unreadResult = await pool.query(`
+      SELECT COUNT(*) FROM notifications 
+      WHERE user_id = $1 AND is_read = FALSE
+    `, [userId]);
+    
+    res.json({
+      success: true,
+      notifications: result.rows,
+      unread_count: parseInt(unreadResult.rows[0].count)
+    });
+  } catch (err) {
+    console.error('Error fetching notifications:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Mark notification as read
+app.put('/api/notifications/:id/read', protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    await pool.query(
+      'UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    
+    res.json({ success: true, message: 'Notification marked as read' });
+  } catch (err) {
+    console.error('Error marking notification read:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Mark all notifications as read
+app.put('/api/notifications/read-all', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    await pool.query(
+      'UPDATE notifications SET is_read = TRUE WHERE user_id = $1',
+      [userId]
+    );
+    
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (err) {
+    console.error('Error marking all notifications read:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

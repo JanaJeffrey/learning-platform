@@ -3,29 +3,30 @@
 // ============================================
 // PROFESSIONAL NAVBAR WITH SLIDE-OUT SIDEBAR
 // ============================================
-// Features:
-// - Desktop: Normal horizontal navbar
-// - Mobile: Slide-out sidebar from left
-// - Dark mode toggle in BOTH desktop and mobile
-// - Active page highlighting
-// - User dropdown menu on desktop
-// - Dashboard link visible in desktop navbar (NEW)
 
 import ThemeToggle from './ThemeToggle';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, token } = useAuth();
   const { darkMode } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Listen for scroll events
   useEffect(() => {
@@ -43,11 +44,17 @@ export default function Navbar() {
       if (isSidebarOpen && !target.closest('.sidebar-menu') && !target.closest('.hamburger-button')) {
         setIsSidebarOpen(false);
       }
+      // Only close search if clicking outside AND not clicking on search input or results
+      if (showSearch && searchRef.current && !searchRef.current.contains(target)) {
+        setShowSearch(false);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, showSearch]);
 
   // Prevent body scroll when sidebar is open
   useEffect(() => {
@@ -67,14 +74,40 @@ export default function Navbar() {
     setIsSidebarOpen(false);
   };
 
-  // Helper function to check if a link is active
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
     if (path !== "/" && pathname.startsWith(path)) return true;
     return false;
   };
 
-  // Navigation links configuration - Dashboard added for authenticated users
+  // Professional search - filters courses based on what you type
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${API_URL}/courses`);
+      const data = await response.json();
+      if (data.success) {
+        const filtered = data.courses.filter((course: any) => 
+          course.title.toLowerCase().includes(query.toLowerCase()) ||
+          course.description.toLowerCase().includes(query.toLowerCase()) ||
+          course.category?.toLowerCase().includes(query.toLowerCase())
+        );
+        setSearchResults(filtered.slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const getNavLinks = () => {
     const baseLinks = [
       { href: "/", label: "Home", icon: "🏠" },
@@ -82,7 +115,6 @@ export default function Navbar() {
       { href: "/about", label: "About", icon: "ℹ️" },
     ];
     
-    // Add Dashboard link for authenticated users
     if (isAuthenticated) {
       baseLinks.push({ 
         href: user?.role === "instructor" ? "/dashboard/instructor" : "/dashboard/student", 
@@ -94,7 +126,6 @@ export default function Navbar() {
     return baseLinks;
   };
 
-  // Sidebar menu items (for mobile)
   const sidebarLinks = [
     { href: "/", label: "Home", icon: "🏠" },
     { href: "/courses", label: "Courses", icon: "📚" },
@@ -115,7 +146,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -126,10 +156,8 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             
-            {/* LEFT SIDE: Hamburger Menu + Logo */}
+            {/* LEFT SIDE */}
             <div className="flex items-center gap-3">
-              
-              {/* Hamburger Menu Button - Mobile only */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="hamburger-button md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
@@ -140,11 +168,7 @@ export default function Navbar() {
                 </svg>
               </button>
               
-              {/* Logo */}
-              <Link 
-                href="/" 
-                className="flex items-center space-x-3 group"
-              >
+              <Link href="/" className="flex items-center space-x-3 group">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-105">
                   <span className="text-white font-bold text-xl">L</span>
                 </div>
@@ -157,7 +181,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* DESKTOP NAVIGATION - Hidden on mobile */}
+            {/* DESKTOP NAVIGATION */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
@@ -189,13 +213,82 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* RIGHT SIDE: Theme Toggle + Auth Buttons (Desktop) */}
+            {/* RIGHT SIDE */}
             <div className="flex items-center space-x-2">
               
-              {/* Theme Toggle Button */}
+              {/* Search - FIXED: Stays open while typing */}
+              <div className="relative" ref={searchRef}>
+                <button
+                  onClick={() => {
+                    setShowSearch(true);
+                    setTimeout(() => {
+                      searchInputRef.current?.focus();
+                    }, 100);
+                  }}
+                  className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+                
+                {showSearch && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    <div className="p-3">
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search courses..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    
+                    {searchQuery.length >= 2 && (
+                      <div className="border-t border-gray-100 dark:border-gray-700 max-h-64 overflow-y-auto">
+                        {isSearching ? (
+                          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                            <div className="inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Searching...
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          searchResults.map((course) => (
+                            <Link
+                              key={course.id}
+                              href={`/courses/${course.id}`}
+                              onClick={() => {
+                                setShowSearch(false);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                              }}
+                              className="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
+                            >
+                              <p className="font-medium text-gray-900 dark:text-white">{course.title}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{course.category}</p>
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                            No courses found for "{searchQuery}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {searchQuery.length > 0 && searchQuery.length < 2 && (
+                      <div className="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">
+                        Type at least 2 characters to search
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
               <ThemeToggle />
               
-              {/* Desktop Auth Buttons - Hidden on mobile */}
+              {/* Desktop Auth Buttons */}
               <div className="hidden md:flex items-center space-x-2">
                 {isAuthenticated ? (
                   <div className="relative group">
@@ -248,9 +341,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* MOBILE SIDEBAR */}
+      {/* MOBILE SIDEBAR - Unchanged */}
       <>
-        {/* Overlay */}
         <div
           className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden ${
             isSidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
@@ -258,13 +350,11 @@ export default function Navbar() {
           onClick={() => setIsSidebarOpen(false)}
         />
         
-        {/* Sidebar Panel */}
         <div
           className={`sidebar-menu fixed top-0 left-0 bottom-0 w-80 bg-white dark:bg-gray-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out md:hidden ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -282,7 +372,6 @@ export default function Navbar() {
             </button>
           </div>
           
-          {/* User Info Section (if logged in) */}
           {isAuthenticated && (
             <div className="p-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-3">
@@ -300,7 +389,6 @@ export default function Navbar() {
             </div>
           )}
           
-          {/* Navigation Links */}
           <div className="py-4 flex-1 overflow-y-auto">
             {sidebarLinks.map((link) => (
               <Link
@@ -318,7 +406,6 @@ export default function Navbar() {
             
             <div className="my-2 h-px bg-gray-100 dark:bg-gray-800 mx-4"></div>
             
-            {/* Auth-specific links */}
             {sidebarAuthLinks.map((link) => (
               <Link
                 key={link.href}
@@ -333,7 +420,6 @@ export default function Navbar() {
               </Link>
             ))}
             
-            {/* Theme Toggle in Sidebar */}
             <div className="my-2 h-px bg-gray-100 dark:bg-gray-800 mx-4"></div>
             
             <div className="px-6 py-3">
@@ -346,7 +432,6 @@ export default function Navbar() {
               </div>
             </div>
             
-            {/* Logout button for logged in users */}
             {isAuthenticated && (
               <>
                 <div className="my-2 h-px bg-gray-100 dark:bg-gray-800 mx-4"></div>

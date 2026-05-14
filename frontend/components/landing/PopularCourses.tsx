@@ -28,7 +28,7 @@ export default function PopularCourses() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-900">
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -52,10 +52,11 @@ export default function PopularCourses() {
   if (courses.length === 0) return null;
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-900">
+    // ⭐ FIXED: Section background - PURE DARK in dark mode, no gradient
+    <section className="py-24 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header - Elegant with accent line */}
+        {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
             Popular Choices
@@ -77,7 +78,7 @@ export default function PopularCourses() {
               href={`/courses/${course.id}`}
               className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-400 block"
             >
-              {/* Top accent bar - subtle color indicator */}
+              {/* Top accent bar */}
               <div className={`h-1 w-full bg-gradient-to-r ${
                 index === 0 ? "from-indigo-500 to-indigo-600" :
                 index === 1 ? "from-blue-500 to-blue-600" :
@@ -88,17 +89,17 @@ export default function PopularCourses() {
               {/* Course Image/Icon Area */}
               <div className="pt-6 pb-2 px-5">
                 <div className="flex items-center justify-between">
-                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-gray-700 dark:to-gray-700 rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform duration-300">
                     {course.thumbnail || "📚"}
                   </div>
                   
-                  {/* Price Badge - refined */}
+                  {/* Price Badge */}
                   {course.price === 0 ? (
-                    <div className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-full">
+                    <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
                       Free
                     </div>
                   ) : (
-                    <div className="px-3 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium rounded-full">
+                    <div className="px-3 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium rounded-full">
                       ${course.price}
                     </div>
                   )}
@@ -107,17 +108,14 @@ export default function PopularCourses() {
               
               {/* Card Body */}
               <div className="px-5 pb-6">
-                {/* Title */}
                 <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                   {course.title}
                 </h3>
                 
-                {/* Description */}
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                   {course.description}
                 </p>
                 
-                {/* Instructor */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-medium shadow-sm">
                     {course.instructorId?.name?.charAt(0) || "P"}
@@ -127,10 +125,8 @@ export default function PopularCourses() {
                   </span>
                 </div>
                 
-                {/* Divider with subtle gradient */}
                 <div className="border-t border-gray-100 dark:border-gray-700 my-4"></div>
                 
-                {/* Stats Row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <div className="flex">
@@ -155,7 +151,7 @@ export default function PopularCourses() {
           ))}
         </div>
         
-        {/* View All Button - Elegant outline with hover effect */}
+        {/* View All Button */}
         <div className="text-center mt-14">
           <Link
             href="/courses"
