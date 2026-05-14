@@ -100,7 +100,7 @@ async function initDB() {
         id TEXT PRIMARY KEY,
         user_id TEXT,
         course_id TEXT,
-        rating INTEGER,
+        rating INTEGER CHECK (rating >= 1 AND rating <= 5),
         comment TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       )
@@ -359,6 +359,96 @@ app.get('/api/dashboard/stats', protect, async (req, res) => {
       }
     });
   } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ============================================
+// REVIEWS API ROUTES
+// ============================================
+
+// Get all reviews for a course (public)
+app.get('/api/courses/:courseId/reviews', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const result = await pool.query(`
+      SELECT r.*, u.name as user_name 
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.course_id = $1
+      ORDER BY r.created_at DESC
+    `, [courseId]);
+    
+    res.json({ success: true, reviews: result.rows });
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Add a review (requires authentication and enrollment)
+app.post('/api/courses/:courseId/reviews', protect, async (req, res) => {
+  const { courseId } = req.params;
+  const { rating, comment } = req.body;
+  const userId = req.user.id;
+  const reviewId = `rev_${Date.now()}`;
+
+  try {
+    // Check if user is enrolled in the course
+    const enrollment = await pool.query(
+      'SELECT * FROM enrollments WHERE user_id = $1 AND course_id = $2',
+      [userId, courseId]
+    );
+    
+    if (enrollment.rows.length === 0) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You must enroll in this course to leave a review' 
+      });
+    }
+
+    // Check if user has already reviewed this course
+    const existingReview = await pool.query(
+      'SELECT * FROM reviews WHERE user_id = $1 AND course_id = $2',
+      [userId, courseId]
+    );
+    
+    if (existingReview.rows.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'You have already reviewed this course' 
+      });
+    }
+
+    // Insert the review
+    await pool.query(
+      `INSERT INTO reviews (id, user_id, course_id, rating, comment, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [reviewId, userId, courseId, rating, comment]
+    );
+
+    // Update course average rating and review count
+    const avgResult = await pool.query(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM reviews WHERE course_id = $1',
+      [courseId]
+    );
+    
+    const avgRating = avgResult.rows[0].avg_rating || 0;
+    const totalReviews = avgResult.rows[0].total_reviews || 0;
+
+    await pool.query(
+      'UPDATE courses SET average_rating = $1, total_reviews = $2 WHERE id = $3',
+      [avgRating, totalReviews, courseId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Review added successfully',
+      average_rating: avgRating,
+      total_reviews: totalReviews
+    });
+  } catch (err) {
+    console.error('Error adding review:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
