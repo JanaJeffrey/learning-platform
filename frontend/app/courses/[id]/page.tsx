@@ -80,7 +80,8 @@ export default function CourseDetailPage() {
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
-      router.push("/login");
+      // ✅ IMPROVEMENT: Redirect to login and come back to this course page
+      router.push(`/login?returnUrl=/courses/${courseId}`);
       return;
     }
 
@@ -166,7 +167,7 @@ export default function CourseDetailPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
       {/* ============================================
-          HERO SECTION - Beautiful Background Image (YOUR EXISTING DESIGN)
+          HERO SECTION - Beautiful Background Image
           ============================================ */}
       <div className="relative overflow-hidden">
         <div 
@@ -255,7 +256,7 @@ export default function CourseDetailPage() {
       </div>
       
       {/* ============================================
-          TABS SECTION - YOUR EXISTING DESIGN (Untouched)
+          TABS SECTION
           ============================================ */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex gap-8 border-b border-gray-200 dark:border-gray-700 mb-8">
@@ -411,9 +412,7 @@ export default function CourseDetailPage() {
         </div>
       </div>
 
-      {/* ============================================
-          NEW SECTION 1: RELATED COURSES (Added at bottom)
-          ============================================ */}
+      {/* RELATED COURSES */}
       {relatedCourses.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200 dark:border-gray-800">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">You might also like</h2>
@@ -445,9 +444,7 @@ export default function CourseDetailPage() {
         </div>
       )}
 
-      {/* ============================================
-          NEW SECTION 2: FAQ SECTION (Added at bottom)
-          ============================================ */}
+      {/* FAQ SECTION */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200 dark:border-gray-800">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Frequently Asked Questions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
