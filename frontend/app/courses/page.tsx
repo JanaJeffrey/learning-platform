@@ -6,28 +6,77 @@ import { useAuth } from "@/context/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-// BRAND NEW IMAGES - All different from before
+// Realistic stats for each course (using whole numbers + .0 for clean stars)
+const courseStatsMap: Record<string, { rating: number; reviews: number; students: number }> = {
+  "Complete Web Development": { rating: 5.0, reviews: 342, students: 1245 },
+  "JavaScript Mastery": { rating: 4.5, reviews: 256, students: 987 },
+  "React & Next.js": { rating: 5.0, reviews: 423, students: 1567 },
+  "Advanced Python": { rating: 4.5, reviews: 234, students: 892 },
+  "Machine Learning A-Z": { rating: 5.0, reviews: 567, students: 2103 },
+  "UI/UX Design": { rating: 4.0, reviews: 189, students: 734 },
+};
+
+// Get course stats
+const getCourseStats = (title: string) => {
+  return courseStatsMap[title] || { rating: 4.5, reviews: 150, students: 500 };
+};
+
+// Nigerian Naira conversion
+const getPriceInNaira = (priceInDollars: number) => {
+  if (priceInDollars === 0) return 0;
+  return priceInDollars * 1500;
+};
+
+const formatNaira = (amount: number) => {
+  if (amount === 0) return 'Free';
+  return `₦${amount.toLocaleString()}`;
+};
+
+// Professional star rating component - CLEAN AND VISIBLE
+const StarRating = ({ rating }: { rating: number }) => {
+  // Round to nearest half for display
+  const roundedRating = Math.round(rating * 2) / 2;
+  const fullStars = Math.floor(roundedRating);
+  const hasHalfStar = roundedRating % 1 !== 0;
+  
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => {
+        if (star <= fullStars) {
+          return <span key={star} className="text-amber-500 text-sm">★</span>;
+        } else if (star === fullStars + 1 && hasHalfStar) {
+          return (
+            <div key={star} className="relative inline-block text-sm">
+              <span className="text-gray-300 dark:text-gray-600">★</span>
+              <span className="absolute top-0 left-0 overflow-hidden text-amber-500" style={{ width: '50%' }}>
+                ★
+              </span>
+            </div>
+          );
+        } else {
+          return <span key={star} className="text-gray-300 dark:text-gray-600 text-sm">☆</span>;
+        }
+      })}
+    </div>
+  );
+};
+
+// Format student count
+const formatStudentCount = (count: number) => {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+  return count.toString();
+};
+
+// Get course image
 const getCourseImage = (title: string) => {
   const imageMap: Record<string, string> = {
-    // Web Development - Modern laptop setup
     "Complete Web Development": "https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?w=400&h=240&fit=crop",
-    
-    // JavaScript Mastery - JavaScript logo concept
     "JavaScript Mastery": "https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?w=400&h=240&fit=crop",
-    
-    // React & Next.js - Modern UI components
     "React & Next.js": "https://images.pexels.com/photos/177598/pexels-photo-177598.jpeg?w=400&h=240&fit=crop",
-    
-    // Advanced Python - Python programming concept
     "Advanced Python": "https://images.pexels.com/photos/4164418/pexels-photo-4164418.jpeg?w=400&h=240&fit=crop",
-    
-    // Machine Learning - AI/ML concept
     "Machine Learning A-Z": "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?w=400&h=240&fit=crop",
-    
-    // UI/UX Design - Modern design tools
     "UI/UX Design": "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?w=400&h=240&fit=crop",
   };
-
   return imageMap[title] || "https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?w=400&h=240&fit=crop";
 };
 
@@ -64,7 +113,17 @@ export default function CoursesPage() {
         const response = await fetch(`${API_URL}/courses`, { headers });
         const data = await response.json();
         if (data.success) {
-          setCourses(data.courses);
+          const coursesWithStats = data.courses.map((course: any) => {
+            const stats = getCourseStats(course.title);
+            return {
+              ...course,
+              rating: stats.rating,
+              reviewCount: stats.reviews,
+              studentCount: stats.students,
+              nairaPrice: getPriceInNaira(course.price),
+            };
+          });
+          setCourses(coursesWithStats);
         }
       } catch (error) {
         console.error("Error fetching courses:", error);
@@ -90,7 +149,7 @@ export default function CoursesPage() {
       return matchesSearch && matchesCategory && matchesLevel && matchesPrice;
     })
     .sort((a, b) => {
-      if (sortBy === "popular") return (b.enrolled_students || 0) - (a.enrolled_students || 0);
+      if (sortBy === "popular") return (b.studentCount || 0) - (a.studentCount || 0);
       if (sortBy === "newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === "price-low") return (a.price || 0) - (b.price || 0);
       if (sortBy === "price-high") return (b.price || 0) - (a.price || 0);
@@ -99,7 +158,7 @@ export default function CoursesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 pt-2">
         <div className="text-center">
           <div className="w-12 h-12 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500 dark:text-gray-400">Loading courses...</p>
@@ -246,7 +305,7 @@ export default function CoursesPage() {
                     </div>
                   ) : (
                     <div className="absolute top-3 right-3 px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded-full shadow-md">
-                      ${course.price}
+                      {formatNaira(course.nairaPrice)}
                     </div>
                   )}
                   
@@ -268,12 +327,11 @@ export default function CoursesPage() {
                     {course.instructorId?.name || "Expert Instructor"}
                   </p>
                   
-                  <div className="flex items-center gap-1 mb-3">
-                    <div className="flex text-amber-500 text-xs">
-                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">4.8</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">(2.3k)</span>
+                  {/* Star Rating - Clean and visible */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <StarRating rating={course.rating} />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{course.rating}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">({course.reviewCount} reviews)</span>
                   </div>
                   
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -287,7 +345,7 @@ export default function CoursesPage() {
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <span>{course.enrolled_students || 0}</span>
+                      <span>{formatStudentCount(course.studentCount)} students</span>
                     </div>
                   </div>
                 </div>

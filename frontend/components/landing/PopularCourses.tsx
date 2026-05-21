@@ -5,6 +5,63 @@ import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Realistic stats for each course
+const courseStatsMap: Record<string, { rating: number; reviews: number; students: number }> = {
+  "Complete Web Development": { rating: 5.0, reviews: 342, students: 1245 },
+  "JavaScript Mastery": { rating: 4.5, reviews: 256, students: 987 },
+  "React & Next.js": { rating: 5.0, reviews: 423, students: 1567 },
+  "Advanced Python": { rating: 4.5, reviews: 234, students: 892 },
+  "Machine Learning A-Z": { rating: 5.0, reviews: 567, students: 2103 },
+  "UI/UX Design": { rating: 4.0, reviews: 189, students: 734 },
+};
+
+const getCourseStats = (title: string) => {
+  return courseStatsMap[title] || { rating: 4.5, reviews: 150, students: 500 };
+};
+
+const getPriceInNaira = (priceInDollars: number) => {
+  if (priceInDollars === 0) return 0;
+  return priceInDollars * 1500;
+};
+
+const formatNaira = (amount: number) => {
+  if (amount === 0) return 'Free';
+  return `₦${amount.toLocaleString()}`;
+};
+
+// Star rating component
+const StarRating = ({ rating }: { rating: number }) => {
+  const roundedRating = Math.round(rating * 2) / 2;
+  const fullStars = Math.floor(roundedRating);
+  const hasHalfStar = roundedRating % 1 !== 0;
+  
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => {
+        if (star <= fullStars) {
+          return <span key={star} className="text-amber-500 text-sm">★</span>;
+        } else if (star === fullStars + 1 && hasHalfStar) {
+          return (
+            <div key={star} className="relative inline-block text-sm">
+              <span className="text-gray-300 dark:text-gray-600">★</span>
+              <span className="absolute top-0 left-0 overflow-hidden text-amber-500" style={{ width: '50%' }}>
+                ★
+              </span>
+            </div>
+          );
+        } else {
+          return <span key={star} className="text-gray-300 dark:text-gray-600 text-sm">☆</span>;
+        }
+      })}
+    </div>
+  );
+};
+
+const formatStudentCount = (count: number) => {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+  return count.toString();
+};
+
 export default function PopularCourses() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +72,17 @@ export default function PopularCourses() {
         const response = await fetch(`${API_URL}/courses`);
         const data = await response.json();
         if (data.success && data.courses) {
-          setCourses(data.courses.slice(0, 4));
+          const coursesWithStats = data.courses.slice(0, 4).map((course: any) => {
+            const stats = getCourseStats(course.title);
+            return {
+              ...course,
+              rating: stats.rating,
+              reviewCount: stats.reviews,
+              studentCount: stats.students,
+              nairaPrice: getPriceInNaira(course.price),
+            };
+          });
+          setCourses(coursesWithStats);
         }
       } catch (error) {
         console.error("Error fetching courses:", error);
@@ -52,8 +119,8 @@ export default function PopularCourses() {
   if (courses.length === 0) return null;
 
   return (
-    // ⭐ FIXED: Section background - PURE DARK in dark mode, no gradient
-    <section className="py-24 bg-white dark:bg-gray-900">
+    // ✅ FIXED: Section background - DARK in dark mode
+    <section className="py-24 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
@@ -70,7 +137,7 @@ export default function PopularCourses() {
           </p>
         </div>
 
-        {/* Courses Grid */}
+        {/* Courses Grid - Cards now have proper dark mode backgrounds */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
           {courses.map((course: any, index: number) => (
             <Link
@@ -94,13 +161,13 @@ export default function PopularCourses() {
                   </div>
                   
                   {/* Price Badge */}
-                  {course.price === 0 ? (
+                  {course.nairaPrice === 0 ? (
                     <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
                       Free
                     </div>
                   ) : (
                     <div className="px-3 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium rounded-full">
-                      ${course.price}
+                      {formatNaira(course.nairaPrice)}
                     </div>
                   )}
                 </div>
@@ -116,6 +183,7 @@ export default function PopularCourses() {
                   {course.description}
                 </p>
                 
+                {/* Instructor */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-medium shadow-sm">
                     {course.instructorId?.name?.charAt(0) || "P"}
@@ -125,25 +193,30 @@ export default function PopularCourses() {
                   </span>
                 </div>
                 
+                {/* Star Rating */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <StarRating rating={course.rating} />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{course.rating}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">({course.reviewCount} reviews)</span>
+                  </div>
+                </div>
+                
                 <div className="border-t border-gray-100 dark:border-gray-700 my-4"></div>
                 
+                {/* Stats Row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <div className="flex">
-                      <span className="text-amber-500 text-sm">★</span>
-                      <span className="text-amber-500 text-sm">★</span>
-                      <span className="text-amber-500 text-sm">★</span>
-                      <span className="text-amber-500 text-sm">★</span>
-                      <span className="text-amber-400 text-sm">★</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">4.8</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">(2.3k)</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zM9 6h2v5H9V6zm0 7h2v2H9v-2z"/>
                     </svg>
-                    <span>{course.totalDuration || 30} hours</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{course.totalDuration || 30} hours</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8v2a2 2 0 01-2 2h-2v-2a4 4 0 00-8 0v2H4a2 2 0 01-2-2V8a8 8 0 1116 0zM10 18a8 8 0 100-16 8 8 0 000 16z"/>
+                    </svg>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatStudentCount(course.studentCount)} students</span>
                   </div>
                 </div>
               </div>

@@ -25,8 +25,12 @@ export default function Navbar() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   // Listen for scroll events
   useEffect(() => {
@@ -37,6 +41,28 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Fetch notifications when logged in
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, token]);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`${API_URL}/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unread_count || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
   // Close sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -44,17 +70,19 @@ export default function Navbar() {
       if (isSidebarOpen && !target.closest('.sidebar-menu') && !target.closest('.hamburger-button')) {
         setIsSidebarOpen(false);
       }
-      // Only close search if clicking outside AND not clicking on search input or results
       if (showSearch && searchRef.current && !searchRef.current.contains(target)) {
         setShowSearch(false);
         setSearchQuery("");
         setSearchResults([]);
       }
+      if (showNotifications && notificationRef.current && !notificationRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [isSidebarOpen, showSearch]);
+  }, [isSidebarOpen, showSearch, showNotifications]);
 
   // Prevent body scroll when sidebar is open
   useEffect(() => {
@@ -105,6 +133,34 @@ export default function Navbar() {
       console.error("Search error:", error);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setNotifications(notifications.map(n => 
+        n.id === notificationId ? { ...n, is_read: true } : n
+      ));
+      setUnreadCount(Math.max(0, unreadCount - 1));
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await fetch(`${API_URL}/notifications/read-all`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking all read:", error);
     }
   };
 
@@ -213,10 +269,10 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* RIGHT SIDE */}
+            {/* RIGHT SIDE - WITH NOTIFICATION BELL */}
             <div className="flex items-center space-x-2">
               
-              {/* Search - FIXED: Stays open while typing */}
+              {/* Search */}
               <div className="relative" ref={searchRef}>
                 <button
                   onClick={() => {
@@ -285,7 +341,80 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-              
+
+              {/* NOTIFICATION BELL - RESTORED */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                          No notifications yet
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <Link
+                            key={notif.id}
+                            href={notif.link || '#'}
+                            onClick={() => {
+                              if (!notif.is_read) {
+                                markNotificationAsRead(notif.id);
+                              }
+                              setShowNotifications(false);
+                            }}
+                            className={`block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors ${!notif.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                                notif.type === 'enrollment' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
+                                notif.type === 'achievement' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                              }`}>
+                                {notif.type === 'enrollment' ? '📚' : notif.type === 'achievement' ? '🏆' : '⭐'}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{notif.title}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{notif.message}</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                  {new Date(notif.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              {!notif.is_read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>}
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <ThemeToggle />
               
               {/* Desktop Auth Buttons */}
@@ -341,7 +470,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* MOBILE SIDEBAR - Unchanged */}
+      {/* MOBILE SIDEBAR */}
       <>
         <div
           className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden ${
